@@ -18,7 +18,7 @@
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """PyACTUp is a lightweight Python implementation of a subset of the ACT-R cognitive
-architecture’s Declarative Memory, suitable for incorporating into other Python models and
+architecture's Declarative Memory, suitable for incorporating into other Python models and
 applications. It is inspired by the ACT-UP cognitive modeling toolbox.
 
 Typically PyACTUp is used by creating an experimental framework, or connecting to an
@@ -39,8 +39,9 @@ sites.
 
 __version__ = '1.0.2'
 
-'''This version extends spreading activation term, add encode(), spreading() methods '''
-
+'''This version adds spreading activation term for both exact match and partial matching, 
+adds importance term for emotional components
+adds encode(), spreading() methods, modifies retrieve() etc. '''
 
 import collections
 import collections.abc as abc
@@ -66,6 +67,8 @@ TRANSCENDENTAL_CACHE_SIZE = 1000
 '''for spreading activation param'''
 DEFAULT_IMAGINAL_ACTIVATION = 1.0
 DEFAULT_MAS = 1.6 # maximum associative strength
+'''for importance term'''
+DEFAULT_IMPORTANCE=None
 
 class Memory(dict):
     """A cognitive entity containing a collection of learned things, its chunks.
@@ -86,6 +89,9 @@ class Memory(dict):
 
     If, when creating a ``Memory`` object, any of *noise*, *decay* or *mismatch* are
     negative, or if *temperature* is less than 0.01, a :exc:`ValueError` is raised.
+    
+    In default, importance is 0. If set importance to None, it will be a value between 0-2
+    A memory could set importance to any value higher/lower
     """
 
     def __init__(self,
@@ -96,7 +102,8 @@ class Memory(dict):
                  mismatch=None,
                  optimized_learning=False,
                  imaginal_activation=DEFAULT_IMAGINAL_ACTIVATION, 
-                 mas=DEFAULT_MAS):
+                 mas=DEFAULT_MAS,
+                 importance=DEFAULT_IMPORTANCE):
         self._temperature_param = 1 # will be reset below, but is needed for noise assignment
         self.noise = noise
         self._decay = None
@@ -104,8 +111,10 @@ class Memory(dict):
         self.temperature = temperature
         self.threshold = threshold
         self.mismatch = mismatch
-        self.imaginal_activation = imaginal_activation,  #for spreading activation
-        self.mas = mas,  #for spreading activation
+        self.imaginal_activation = imaginal_activation,  #for spreading activation term
+        self.mas = mas,  #for spreading activation param
+        #for importance term, if None, 0-2, else value
+        self.importance = self.set_importance(importance) 
         self._activation_history = None
         self.reset(bool(optimized_learning))
 
@@ -128,6 +137,8 @@ class Memory(dict):
         self._time = 0
         if optimized_learning is not None:
             self._optimized_learning = bool(optimized_learning)
+        ### reset importance
+        self.importance=DEFAULT_IMPORTANCE
 
     def advance(self, amount=1):
         """Adds the given *amount* to this Memory's time, and returns the new, current time.
@@ -271,6 +282,7 @@ class Memory(dict):
             raise ValueError(f"The mismatch penalty, {value}, must not be negative")
         else:
             self._mismatch = float(value)
+
             
     @property
     def activation_history(self):
@@ -364,7 +376,8 @@ class Memory(dict):
             return result
         else:
             return -1
-
+    
+    "MODIFIED: add importance term to learned chunk"
     def learn(self, **kwargs):
         """Adds, or reinforces, a chunk in this Memory with the attributes specified by *kwargs*.
         The attributes, or slots, of a chunk are described using Python keyword arguments.
@@ -406,6 +419,9 @@ class Memory(dict):
             chunk._references += 1
         else:
             chunk._references.append(self._time)
+        
+        # add emotional component
+        chunk._importance=self.set_importance(self.importance)
         return created
     
     
@@ -462,11 +478,10 @@ class Memory(dict):
         >>> m.retrieve(color="blue")["widget"]
         'snackleizer'
         """
-        
+        self._spreading(ichunk) # set m._spreading_activation_vec
         if partial:
             return self._partial_match(ichunk)
         else:
-            self._spreading(ichunk)
             return self._exact_match(ichunk)
     
     '''MODIFIED'''
@@ -477,31 +492,22 @@ class Memory(dict):
         # such chunks returns None.
         best_chunk = None
         best_activation = self._threshold
-        c=-1 ## chunk 0 in dm
+        i=0
         for chunk in self.values():
-            c=c+1
+            chunk._set_spreading_activation(self._spreading_activation_vec[i])
+            i=i+1
             if not ichunk.keys() <= chunk.keys(): ## ichunk belongs to chunk (color) <= (color, size)
                 continue
-            #for key, value in ichunk.items(): ## same slot, ichunk's value!= chunk's value
-            #    if chunk[key] != value:
-            #        break
             if ichunk._compare_chunk(chunk)==[0,0]: # diff slot and diff value
                 continue
             else:   # this matches the for, NOT the if
-                a = chunk._activation() 
-                spreading_activation = self._spreading_activation_term[c]
-                #print ('before: a', a, 'spread: ', spreading_activation)
-                a = a + spreading_activation
+                a = chunk._activation()
                 if self._activation_history is not None:
                     history = self._activation_history[-1]
-                    history["spreading_activation"] = spreading_activation
                     history["activation"] = a
                 if a >= best_activation:
                     best_chunk = chunk
                     best_activation = a
-        #print('in_exact_match best: ', best_chunk, best_activation)
-        self._clear_spreading()
-        
         ## need to re-encode before retrieve
         if best_chunk is not None: 
             self.encode(best_chunk)
@@ -518,15 +524,20 @@ class Memory(dict):
         def __init__(self, memory, conditions):
             self._memory = memory
             self._conditions = conditions
+            self.i=0
+            self.n=len(self._memory.values())
 
         def __iter__(self):
             self._chunks = self._memory.values().__iter__()
             return self
 
         def __next__(self):
-            print('in __next__() conditions:', self._conditions)
             while True:
                 chunk = self._chunks.__next__()             # pass on up the Stop Iteration
+                if self.i < self.n:
+                    i = self.i
+                    self.i += 1
+                chunk._set_spreading_activation(self._memory._spreading_activation_vec[i])
                 if self._conditions.keys() <= chunk.keys(): # subset
                     if self._memory._mismatch is not None:
                         activation = chunk._activation(True)
@@ -549,13 +560,17 @@ class Memory(dict):
     def _activations(self, conditions):
         return self._Activations(self, conditions)
 
-    def _partial_match(self, conditions):
+    def _partial_match(self, ichunk):
         best_chunk = None
-        best_activation = self._threshold
-        for chunk, activation in self._activations(conditions):
+        best_activation = self._threshold 
+        for chunk, activation in self._activations(ichunk):
             if activation >= self._threshold:
                 best_chunk = chunk
                 best_activation = activation
+                
+        ## need to re-encode before retrieve
+        if best_chunk:
+            self.encode(best_chunk)
         return best_chunk
 
     def blend(self, outcome_attribute, **kwargs):
@@ -606,31 +621,28 @@ class Memory(dict):
     
     '''------------------------ imaginal buffer properties ------------------- '''
     '''before retrieve, add a spreading act matrix to dm buffer'''
+    '''vector [.95, .75, 0, 0]'''
     def _spreading(self, ichunk):
-        spreading_activation_term=0
+        self._clear_spreading()
         try:
-            spreading_activation_term=ichunk._get_spreading_activation(self)
-            self._spreading_activation_term=spreading_activation_term
+            self._spreading_activation_vec=ichunk._compute_spreading_activation_vec(self)
         except:
-            ## print('chunk does not exists.')
             pass
-        return spreading_activation_term
+        return self._spreading_activation_vec
     
     def _clear_spreading(self):
-        self._spreading_activation_term=None
+        self._spreading_activation_vec=None
     
     '''get ith chunk'''
     def _curr_chunk(self, i):
         return list(self.values())[i]
     
     '''encode ichunk in dm buffer'''
-    '''Modified references'''
+    '''Modified references, add importance term'''
     def encode(self, ichunk):
         created = None
         signature = tuple(sorted(ichunk.items()))
-        chunk = self.get(signature) 
-        # chunk = self.retrieve(ichunk)
-        # print('retrieving...', chunk)
+        chunk = self.get(signature)
         if not chunk:
             chunk = Chunk(self, ichunk)
             self[signature] = chunk
@@ -639,7 +651,21 @@ class Memory(dict):
             chunk._references += 1
         else:
             chunk._references.append(self._time)
+            
+        ### pass importance properties to dm chunk
+        chunk._importance=ichunk._importance
+        # print('in encode dm chunk ', chunk._importance)
         return chunk
+    """-------------------- add emotional term ----------------------"""
+    '''For "normal" chunks, V = 1.0 +/- noise. 
+    For a potentially traumatic event (PTE), it is set to a predefined value PTEV >> 1.0.'''
+    def set_importance(self, value):
+        if value is None or value is False:
+            self.importance = math.log(random.uniform(sys.float_info.epsilon, 2 - sys.float_info.epsilon))
+        else:
+            self.importance = float(value)
+        return self.importance
+    """"""
     
 @property
 def use_actr_similarity():
@@ -687,7 +713,7 @@ def set_similarity_function(function, *slots):
 class Chunk(dict):
 
     __slots__ = ["_name", "_memory", "_creation", "_references",
-                 "_base_activation_time", "_base_activation"]
+                 "_base_activation_time", "_base_activation", "_spreading_activation", "_importance"]
 
     _name_counter = 0;
 
@@ -700,6 +726,8 @@ class Chunk(dict):
         self._references = 0 if memory._optimized_learning else []
         self._base_activation_time = None
         self._base_activation = None
+        self._spreading_activation = None # only applies for dm chunk
+        self._importance = None
 
     def __repr__(self):
         return "<Chunk {} {}>".format(self._name, dict(self))
@@ -707,11 +735,14 @@ class Chunk(dict):
     def __str__(self):
         return self._name
 
+    "MODIFIED: a adds spreading activation term and importance term"
     def _activation(self, for_partial=False):
         # Does not include the mismatch penalty component, that's handled by the caller.
         base = self._get_base_activation()
         noise = self._memory._make_noise()
-        result = base + noise
+        spreading_activation = self._spreading_activation if self._spreading_activation else 0
+        importance = self._importance if self._importance else 0        
+        result = base + noise + spreading_activation + importance
         if self._memory._activation_history is not None:
             history = OrderedDict(name=self._name,
                                   creation_time=self._creation,
@@ -720,7 +751,9 @@ class Chunk(dict):
                                               if self._memory.optimized_learning
                                               else tuple(self._references)),
                                   base_activation=base,
-                                  activation_noise=noise)
+                                  activation_noise=noise,
+                                  spreading_activation=spreading_activation,
+                                  importance=importance)
             if not for_partial:
                 history["activation"] = result
             self._memory._activation_history.append(history)
@@ -767,6 +800,14 @@ class Chunk(dict):
             self._base_activation_time = self._memory.time
         return self._base_activation
     
+    """-------------------- add dm chunk spreading activation ----------------------"""
+    def _set_spreading_activation(self, value):
+        self._spreading_activation=value
+        
+    def _clear_spreading_activation(self):
+        self._spreading_activation=None
+        
+    
     
     """-------------------- add imaginal chunk propoerties in chunk object----------------------"""
     def _get_slot(self, i):
@@ -794,9 +835,11 @@ class Chunk(dict):
             result.append(self._compare_source(source))
         return result
         
-    # compute spreading activation for all chunks in dm
-    # not matching chunk in dm will be assign 0 for spreading acivation
-    def _get_spreading_activation(self, dm):
+    # given attended chunk in imaginal buffer, compute spreading activation 
+    # for all chunks in dm. not matching chunk in dm will be assign 0 for spreading acivation
+    # e.g. 4 memory items: [.95, .75, 0, 0]
+    # return a vector of spreading activation
+    def _compute_spreading_activation_vec(self, dm):
         # compyte sp_param
         sp_param=[]
         for chunk in list(dm.values()):
