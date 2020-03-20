@@ -656,12 +656,14 @@ class Memory(dict):
         chunk._importance=ichunk._importance
         # print('in encode dm chunk ', chunk._importance)
         return chunk
+    
     """-------------------- add emotional term ----------------------"""
     '''For "normal" chunks, V = 1.0 +/- noise. 
     For a potentially traumatic event (PTE), it is set to a predefined value PTEV >> 1.0.'''
     def set_importance(self, value):
         if value is None or value is False:
-            self.importance = math.log(random.uniform(sys.float_info.epsilon, 2 - sys.float_info.epsilon))
+            p = random.uniform(sys.float_info.epsilon, 2 - sys.float_info.epsilon)
+            self.importance = math.log(p)
         else:
             self.importance = float(value)
         return self.importance
