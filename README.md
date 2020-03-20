@@ -1,7 +1,7 @@
-﻿# PyACTUp 1.0.3 
+﻿# PyACTUp 1.0.2
 
 ### What's new
-This version adds spreading activation term, some properties for Imaginal Buffer, and add Importance term
+This version adds spreading activation term, importance term, some properties for Imaginal Buffer
 
 
 To make everything easier, I didn't change much about old methods, instead I added new ones, such as information first needs to be attended, then cleared from Imaginal buffer, then copied to declarative memory buffer. The chunk in Imaginal buffer should be **spreading** to all chunks in declarative memory buffer. Moreover, when successfully retrieving a memory, model should re-encode this memory. 
@@ -17,8 +17,7 @@ ATTEND: In Imaginal buffer, learn() means attending to the info (color='red', si
 
     import pyactup_v2 as pya
     imaginal_buffer=pya.Memory() 
-	
-	imaginal_buffer.learn(color='red', size=1)
+    imaginal_buffer.learn(color='red', size=1)
 
 ENCODE: In declarative buffer, encode() means storing information to the LTM
 
@@ -31,8 +30,16 @@ RETRIEVE: first attending to the info, and then trying to retrieve. If succeed, 
 
     imaginal_buffer.learn(color='red', size=1)
     result = dm_buffer.retrieve(imaginal_buffer._curr_chunk(0))
+    
+    ### set mismatch param = 100 for partial matching
+    dm_buffer.mismatch=100
+    imaginal_buffer.learn(color='red', size=1)
+    ichunk=imaginal_buffer._curr_chunk(0)
+    
+    result = dm_buffer.retrieve(ichunk, partial=True)
+    dm_buffer.advance(2)
 
 ### What's NEXT?
-- Haven't implement partial match. TODO
-- Add emotional term - DONE
+- Add Emotinal term - DONE
+- Implement partial match - DONE
 
