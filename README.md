@@ -6,9 +6,9 @@ This version adds spreading activation term, importance term, some properties fo
 
 To make everything easier, I didn't change much about old methods, instead I added new ones, such as information first needs to be attended, then cleared from Imaginal buffer, then copied to declarative memory buffer. The chunk in Imaginal buffer should be **spreading** to all chunks in declarative memory buffer. Moreover, when successfully retrieving a memory, model should re-encode this memory. 
 
-The imaginal buffer could set **importance** parameter. By default, it would add a uniformly distributed value from 0-2 to Activation. When importance is set to a high value, it would be added to chunk's Activation and take over the retrieval process.
+The imaginal buffer could set **importance** parameter. By default, it would add a uniformly distributed value from 0-2 to Activation. When importance is set to a high value, it would be added to chunk's Activation and take over the retrieval process. (Details about the definition and theory behind **impotance** could be found here: https://github.com/UWCCDL/PTSD) 
 
-Both spreading activation and importance term could be found in _activation_history dict.
+Both spreading activation and importance term could be checked in _activation_history.
 
 
 
