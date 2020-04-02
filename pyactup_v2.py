@@ -842,7 +842,7 @@ class Chunk(dict):
     # e.g. 4 memory items: [.95, .75, 0, 0]
     # return a vector of spreading activation
     def _compute_spreading_activation_vec(self, dm):
-        # compyte sp_param
+        # compute sp_param, fan_j
         sp_param=[]
         for chunk in list(dm.values()):
             sp_param.append(chunk._compare_chunk(self))
