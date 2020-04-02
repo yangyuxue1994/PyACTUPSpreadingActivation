@@ -19,7 +19,7 @@ Both spreading activation and importance term could be checked in _activation_hi
 
 The chunks in the buffers provide a context in which to perform a retrieval. Those chunks can spread activation to the chunks in declarative memory based on the contents of their slots. Those slot contents spread an amount of activation based on their relation to the other chunks, which we call their strength of association. This essentially results in increasing the activation of those chunks which are related to the current context. (See ACTR Tutorial Unit 5 for full explanations)
 
-By default, only imaginal buffer serves as source of activation. The $W_{imaginal}$ (Imaginal Activation Parameter) is default to 1. In this version, I only implemented the default case and the equation for the activation $A_i$ of a chunk i including spreading activation could be simplified as:
+By default, only imaginal buffer serves as source of activation. The W_imaginal (Imaginal Activation Parameter) is default to 1. In this version, I only implemented the default case and the equation for the activation Ai of a chunk i including spreading activation could be simplified as:
 
 
 ![alt text](https://lh3.googleusercontent.com/ABVsgSQ0KneRZUL9PDXuYPKroQsutzg_5qMQ_NZEQfBX-wdly-aMd3v99ZBqjSu7LTL9ShwJMSscKsPLmjssHG9oLZO7z0-ToO70sXyL5Bs0bj-Xv67rY_ZsjxFPBzNClG6q-AG7 "Eq.1")
