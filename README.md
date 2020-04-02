@@ -53,7 +53,7 @@ The new term I(m) can be broadly interpreted as the degree of importance (needed
 The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance 
                         I(m) / I(¬m)
 
-![alt_text](https://lh3.googleusercontent.com/cbBNm4HAtUPOg6txP2Z_izOf-3AgYypYN7y8DFoVHJhaJeSc1OJRsNDdYgjTnUB4x9CILa1fIYSxmbbzFsjbv2f-L0ArhsWUj9L6FsKm)
+![alt_text](https://lh4.googleusercontent.com/uRcEdRtN9THpDkSWL_eRn1s2jjJaThj0Od_DuigPQg4sD9-EUq0iOk7RM0qNSPCSktyLUyHVqUU9aB0j6Z-7782cB1a6JIizuIIB6SRiN9MHXiP9wd9WQv-06Oz007W3k9WE_foh)
 
 Finally, 
 
