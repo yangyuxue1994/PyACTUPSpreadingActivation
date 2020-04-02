@@ -30,6 +30,12 @@ $$ S_{ji} = S – ln(fan_j) $$
 $S$: the maximum associative strength (set with the mas parameter, suggested default is 1.6)
 $fan_j$: the number of chunks in declarative memory in which j is the value of a slot plus one.
 
+![alt text](https://lh3.googleusercontent.com/d9JBhD-RpoTNefBu7gnRPL0D3mqhc_MtXXUGTjMulCcUvSIMoQlhU6S-kiN4B8Z4mF_rNGTwrelV4UICcqoe-1LoHnCEwPgQRdeDXIe3GET65aUAvNi6-tv7VTH5qRedVQozWedS "Spreading Activation Example")
+
+
+
+
+
 
 ### Emotional Component Mechanisms and Equations
 
@@ -38,6 +44,8 @@ The emotional component implemented in this version is based on Stocco's PTSD mo
 The effects of emotion on declarative memory is represented by the scalar value I(m) for every memory m created. Every time a new memory is added, its value I(m) is computed and recorded. By default, it adds a uniformly distributed value from 0-2 to $A_i$. When importance parameter is set to a high value, it would be added to chunk's Activation and take over the retrieval process.
 
 The new term I(m) can be broadly interpreted as the degree of importance (needed for survival) of this memory, or specifically can be interpreted as emotional processing. Memories that are associated with different emotions, or to the same emotion but to a different degree, should also differ in importance value. Admittedly, there could be many factors that determine how important one memory is, but here we make a simple approximation, the term I(m) can be interpreted as a single measure capturing the emotional intensity of memory.
+
+![alt text](https://lh3.googleusercontent.com/PgI6peikKtHoKhjGSehkbs5xND0XdGzqFV4BHdPvLt_awR-WgwYjvcAghR1zh-BhKYwfqzyzKaFCPfwdYx-IuUkd9jyznaGzHqwak1ll "Importance Term")
 
 The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance $I_m / I_{¬m}$
 
