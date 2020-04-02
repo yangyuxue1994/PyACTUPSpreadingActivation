@@ -492,7 +492,7 @@ class Memory(dict):
         # such chunks returns None.
         best_chunk = None
         best_activation = self._threshold
-        i=0 # index of dm chunks
+        i=0 # index of _spreading_activation_vector
         for chunk in self.values():
             chunk._set_spreading_activation(self._spreading_activation_vec[i])
             i=i+1
@@ -844,22 +844,23 @@ class Chunk(dict):
     # e.g. 4 memory items: [.95, .75, 0, 0]
     # return a vector of spreading activation
     def _compute_spreading_activation_vec(self, dm):
-        # compute count_matrix
-        count_matrix=[]
+        # compute match_count
+        #[[1 1],[1 0],[0 0]]
+        match_count=[]
         for chunk in list(dm.values()):
-            count_matrix.append(chunk._compare_chunk(self))
-        count_matrix=np.array(count_matrix)
+            match_count.append(chunk._compare_chunk(self))
+        match_count=np.array(match_count)
         
         # compute wj
         wj=dm.imaginal_activation * np.ones(len(self.items()))/len(self.items())
         
         # compute sji
         ## mas: maximum associative strength
-        fan=np.sum(count_matrix, axis=0)+1 # a vector of fan number
+        fan=np.sum(match_count, axis=0)+1 # a vector of fan number
         sji=dm.mas - np.log(fan)   
         
         # compute sji for each chunk
-        result=np.sum(wj*sji*count_matrix, axis=1)
+        result=np.sum(wj*sji*match_count, axis=1)
         return result
         
 # Local variables:
