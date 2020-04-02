@@ -17,18 +17,20 @@ The chunks in the buffers provide a context in which to perform a retrieval. Tho
 
 By default, only imaginal buffer serves as source of activation. The $W_{imaginal}$ (Imaginal Activation Parameter) is default to 1. In this version, I only implemented the default case and the equation for the activation $A_i$ of a chunk i including spreading activation could be simplified as:
 
-        $$Ai = Bi + \sum_{j} W_j * S_{ji} +  e$$
+
+![alt text](https://lh3.googleusercontent.com/ABVsgSQ0KneRZUL9PDXuYPKroQsutzg_5qMQ_NZEQfBX-wdly-aMd3v99ZBqjSu7LTL9ShwJMSscKsPLmjssHG9oLZO7z0-ToO70sXyL5Bs0bj-Xv67rY_ZsjxFPBzNClG6q-AG7 "Eq.1")
 
 
-$W$: imaginal activation parameter (default 1)
-$W_j$: $W/n$ (n is the number of slots in current imaginal buffer chunk)
+- W: imaginal activation parameter (default 1)
+- Wj: W/n (n is the number of slots in current imaginal buffer chunk)
 
-The strength of association, $S_{ji}$, between two chunks j and chunk i is 0 if chunk j is not the value of a slot of chunk i and j and i are not the same chunk. Otherwise, it is set using this equation:
+The strength of association, Sji, between two chunks j and chunk i is 0 if chunk j is not the value of a slot of chunk i and j and i are not the same chunk. Otherwise, it is set using this equation:
 
-$$ S_{ji} = S – ln(fan_j) $$
 
-$S$: the maximum associative strength (set with the mas parameter, suggested default is 1.6)
-$fan_j$: the number of chunks in declarative memory in which j is the value of a slot plus one.
+![alt text](https://lh6.googleusercontent.com/QWeGhjzUmkKDXFr0Xq_84IZ6umbdSCa8bzsPbtYaMsBF98ZSbYji7F8YDIHcQpWPT2l_SaSCLhaoaBYeCKjSco3J6EsRfGE0PByHGIQvJjiF7cnP3YiAlnNfSO489xGLuZF6pNMJ)
+
+- S: the maximum associative strength (set with the mas parameter, suggested default is 1.6)
+- fan(j): the number of chunks in declarative memory in which j is the value of a slot plus one.
 
 ![alt text](https://lh3.googleusercontent.com/d9JBhD-RpoTNefBu7gnRPL0D3mqhc_MtXXUGTjMulCcUvSIMoQlhU6S-kiN4B8Z4mF_rNGTwrelV4UICcqoe-1LoHnCEwPgQRdeDXIe3GET65aUAvNi6-tv7VTH5qRedVQozWedS "Spreading Activation Example")
 
@@ -39,19 +41,20 @@ $fan_j$: the number of chunks in declarative memory in which j is the value of a
 
 The emotional component implemented in this version is based on Stocco's PTSD model (2020). See full explanation here: 
 
-The effects of emotion on declarative memory is represented by the scalar value I(m) for every memory m created. Every time a new memory is added, its value I(m) is computed and recorded. By default, it adds a uniformly distributed value from 0-2 to $A_i$. When importance parameter is set to a high value, it would be added to chunk's Activation and take over the retrieval process.
+The effects of emotion on declarative memory is represented by the scalar value I(m) for every memory m created. Every time a new memory is added, its value I(m) is computed and recorded. By default, it adds a uniformly distributed value from 0-2 to Ai. When importance parameter is set to a high value, it would be added to chunk's Activation and take over the retrieval process.
 
 The new term I(m) can be broadly interpreted as the degree of importance (needed for survival) of this memory, or specifically can be interpreted as emotional processing. Memories that are associated with different emotions, or to the same emotion but to a different degree, should also differ in importance value. Admittedly, there could be many factors that determine how important one memory is, but here we make a simple approximation, the term I(m) can be interpreted as a single measure capturing the emotional intensity of memory.
 
 ![alt text](https://lh3.googleusercontent.com/PgI6peikKtHoKhjGSehkbs5xND0XdGzqFV4BHdPvLt_awR-WgwYjvcAghR1zh-BhKYwfqzyzKaFCPfwdYx-IuUkd9jyznaGzHqwak1ll "Importance Term")
 
-The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance $I_m / I_{¬m}$
+The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance 
+                        I(m) / I(¬m)
 
-$$ A_i = \log( \frac{P(m|Q)} {P(¬m|Q)} *  \frac{I_m} {I_{¬m})} ) = \log( \frac{P(m)} {P(¬m)}) + \sum_q{\log(\frac{P(q|m)}{P(q)})} + \log(I_m) = ...$$
+![alt_text](https://lh6.googleusercontent.com/3hbc8o_K9N9O4QZie91ZPlUINazKQhzk1fTnjQZ3LjQ01cP0TIfYzpe3dP0FQPkfyhaASkRgpzQVYc6qecqQ32RDFkUE2j9RDGTUD25Rr9BoXbG02yXXCWssBD3R2wThdvBbsZ0K)
 
 Finally, 
-$$ A_i = B_i + S_ +   \sum_{j} W_j*S_{ji} + e + \log(I_m) - \log(\bar{I})$$
 
+![alt_text](https://lh6.googleusercontent.com/IkuIYGOT8GZxPa6tROML0ZzUS5Uas1O7puqnkOIigfTMsNn4kZidCYEn5fUw3NrNzgEHl6VOWemLaWEFS_5ZW3kYL0o_5_T-J_wB5X5lGSroYuxNli7sTI_uANCDBeMQ1ip5KwqQ)
 
 ### Code Example
 ATTEND: In Imaginal buffer, learn() means attending to the info (color='red', size=1)
