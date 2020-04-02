@@ -50,11 +50,11 @@ The new term I(m) can be broadly interpreted as the degree of importance (needed
 The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance 
                         I(m) / I(¬m)
 
-![alt_text](https://lh6.googleusercontent.com/3hbc8o_K9N9O4QZie91ZPlUINazKQhzk1fTnjQZ3LjQ01cP0TIfYzpe3dP0FQPkfyhaASkRgpzQVYc6qecqQ32RDFkUE2j9RDGTUD25Rr9BoXbG02yXXCWssBD3R2wThdvBbsZ0K)
+![alt_text](https://lh3.googleusercontent.com/cbBNm4HAtUPOg6txP2Z_izOf-3AgYypYN7y8DFoVHJhaJeSc1OJRsNDdYgjTnUB4x9CILa1fIYSxmbbzFsjbv2f-L0ArhsWUj9L6FsKm)
 
 Finally, 
 
-![alt_text](https://lh6.googleusercontent.com/IkuIYGOT8GZxPa6tROML0ZzUS5Uas1O7puqnkOIigfTMsNn4kZidCYEn5fUw3NrNzgEHl6VOWemLaWEFS_5ZW3kYL0o_5_T-J_wB5X5lGSroYuxNli7sTI_uANCDBeMQ1ip5KwqQ)
+![alt_text](https://lh3.googleusercontent.com/4YDvx-hpHNoMz4LD05al9FmHpmZsrkY_GwAorIKrS2NNFhqfvvlHtAtkE57J5B9Z_5QeaoPhb3sYC_bsFTDS30C50SewXft2ULhRRV1klPEaYclTgdY3Iif0BHX9UR7spRATJ2Z5)
 
 ### Code Example
 ATTEND: In Imaginal buffer, learn() means attending to the info (color='red', size=1)
