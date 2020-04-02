@@ -492,13 +492,13 @@ class Memory(dict):
         # such chunks returns None.
         best_chunk = None
         best_activation = self._threshold
-        i=0
+        i=0 # index of dm chunks
         for chunk in self.values():
             chunk._set_spreading_activation(self._spreading_activation_vec[i])
             i=i+1
             if not ichunk.keys() <= chunk.keys(): ## ichunk belongs to chunk (color) <= (color, size)
                 continue
-            if ichunk._compare_chunk(chunk)==[0,0]: # diff slot and diff value
+            if sum(ichunk._compare_chunk(chunk))== 0: # no slot matches [0,0,0...0]
                 continue
             else:   # this matches the for, NOT the if
                 a = chunk._activation()
@@ -524,8 +524,8 @@ class Memory(dict):
         def __init__(self, memory, conditions):
             self._memory = memory
             self._conditions = conditions
-            self.i=0
-            self.n=len(self._memory.values())
+            self.i=0 # index of spreading activation vector
+            self.n=len(self._memory.values()) # total number of memories 
 
         def __iter__(self):
             self._chunks = self._memory.values().__iter__()
@@ -537,7 +537,9 @@ class Memory(dict):
                 if self.i < self.n:
                     i = self.i
                     self.i += 1
-                chunk._set_spreading_activation(self._memory._spreading_activation_vec[i])
+                # assign spreading activation number to chunk in dm
+                chunk._set_spreading_activation(self._memory._spreading_activation_vec[i]) 
+                
                 if self._conditions.keys() <= chunk.keys(): # subset
                     if self._memory._mismatch is not None:
                         activation = chunk._activation(True)
@@ -627,7 +629,7 @@ class Memory(dict):
         try:
             self._spreading_activation_vec=ichunk._compute_spreading_activation_vec(self)
         except:
-            pass
+            raise RuntimeError("Failed to spread.")
         return self._spreading_activation_vec
     
     def _clear_spreading(self):
@@ -842,21 +844,22 @@ class Chunk(dict):
     # e.g. 4 memory items: [.95, .75, 0, 0]
     # return a vector of spreading activation
     def _compute_spreading_activation_vec(self, dm):
-        # compute sp_param, fan_j
-        sp_param=[]
+        # compute count_matrix
+        count_matrix=[]
         for chunk in list(dm.values()):
-            sp_param.append(chunk._compare_chunk(self))
-        sp_param=np.array(sp_param)
+            count_matrix.append(chunk._compare_chunk(self))
+        count_matrix=np.array(count_matrix)
         
         # compute wj
         wj=dm.imaginal_activation * np.ones(len(self.items()))/len(self.items())
         
         # compute sji
         ## mas: maximum associative strength
-        sji=dm.mas - np.log(np.sum(sp_param, axis=0)+1)
+        fan=np.sum(count_matrix, axis=0)+1 # a vector of fan number
+        sji=dm.mas - np.log(fan)   
         
         # compute sji for each chunk
-        result=np.sum(wj*sji*sp_param, axis=1)
+        result=np.sum(wj*sji*count_matrix, axis=1)
         return result
         
 # Local variables:
