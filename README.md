@@ -1,4 +1,7 @@
 ﻿# PyACTUp 1.0.2
+### Required Packages and Python Version
+Consistent with PyACTUP 1.0.1, this version requires Python 3.6.9+
+In addition, it requires numpy packages 1.18.1+ 
 
 ### What's new
 This version adds spreading activation term, importance term, some properties for Imaginal Buffer
@@ -39,7 +42,7 @@ The strength of association, Sji, between two chunks j and chunk i is 0 if chunk
 
 ### Emotional Component Mechanisms and Equations
 
-The emotional component implemented in this version is based on Stocco's PTSD model (2020). See full explanation here: 
+The emotional component implemented in this version is based on Stocco's PTSD model (2020). See full explanation here: https://github.com/UWCCDL/PTSD
 
 The effects of emotion on declarative memory is represented by the scalar value I(m) for every memory m created. Every time a new memory is added, its value I(m) is computed and recorded. By default, it adds a uniformly distributed value from 0-2 to Ai. When importance parameter is set to a high value, it would be added to chunk's Activation and take over the retrieval process.
 
