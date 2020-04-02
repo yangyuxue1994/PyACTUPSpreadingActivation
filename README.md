@@ -1,6 +1,7 @@
 ﻿# PyACTUp 1.0.2
 ### Required Packages and Python Version
 Consistent with PyACTUP 1.0.1, this version requires Python 3.6.9+
+
 In addition, it requires numpy packages 1.18.1+ 
 
 ### What's new
@@ -53,11 +54,11 @@ The new term I(m) can be broadly interpreted as the degree of importance (needed
 The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance 
                         I(m) / I(¬m)
 
-![alt_text](https://lh4.googleusercontent.com/uRcEdRtN9THpDkSWL_eRn1s2jjJaThj0Od_DuigPQg4sD9-EUq0iOk7RM0qNSPCSktyLUyHVqUU9aB0j6Z-7782cB1a6JIizuIIB6SRiN9MHXiP9wd9WQv-06Oz007W3k9WE_foh)
+![alt_text](https://lh3.googleusercontent.com/JOhd2plJV7SKOAgNHGhTTKrRnJq1v9iCB4CRWfF-yEZ5kyqo23E6aLLBCDJmKOZgFNRZ-GR7SiFHPv_MvuOn7QMqeyCccuELKqxtPFit)
 
 Finally, 
 
-![alt_text](https://lh3.googleusercontent.com/4YDvx-hpHNoMz4LD05al9FmHpmZsrkY_GwAorIKrS2NNFhqfvvlHtAtkE57J5B9Z_5QeaoPhb3sYC_bsFTDS30C50SewXft2ULhRRV1klPEaYclTgdY3Iif0BHX9UR7spRATJ2Z5)
+![alt_text](https://lh5.googleusercontent.com/Eia8Vt1LQEY4jeGSeUYd6ppac8zx2YsUhwcbwgGzpI4xUpzRO8r9wtXj4U8DsVCJ2EBh2IiZ0ODRVcrEQXxea_-M7Wto5E_9hKCY9YU)
 
 ### Code Example
 ATTEND: In Imaginal buffer, learn() means attending to the info (color='red', size=1)
@@ -89,4 +90,5 @@ RETRIEVE: first attending to the info, and then trying to retrieve. If succeed, 
 ### What's NEXT?
 - Add Emotinal term - DONE
 - Implement partial match - DONE
+- Time. dm_buffer and imaginal buffer each has a clock. Need to fix this issue. 
 
