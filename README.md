@@ -5,15 +5,11 @@ Consistent with PyACTUP 1.0.1, this version requires Python 3.6.9+
 In addition, it requires numpy packages 1.18.1+ 
 
 ### What's new
-This version adds spreading activation term, importance term, some properties for Imaginal Buffer
-
-
-To make everything easier, I didn't change much about old methods, instead I added new ones, such as information first needs to be attended, then cleared from Imaginal buffer, then copied to declarative memory buffer. The chunk in Imaginal buffer should be **spreading** to all chunks in declarative memory buffer. Moreover, when successfully retrieving a memory, model should re-encode this memory. 
+This version adds spreading activation term, importance term.
 
 The imaginal buffer could set **importance** parameter. By default, it would add a uniformly distributed value from 0-2 to Activation. When importance is set to a high value, it would be added to chunk's Activation and take over the retrieval process. (Details about the definition and theory behind **impotance** could be found here: https://github.com/UWCCDL/PTSD) 
 
 Both spreading activation and importance term could be checked in _activation_history.
-
 
 ### Spreading Activation Mechanisms and Equations
 
@@ -61,33 +57,14 @@ Finally,
 ![alt_text](https://lh5.googleusercontent.com/Eia8Vt1LQEY4jeGSeUYd6ppac8zx2YsUhwcbwgGzpI4xUpzRO8r9wtXj4U8DsVCJ2EBh2IiZ0ODRVcrEQXxea_-M7Wto5E_9hKCY9YU)
 
 ### Code Example
-ATTEND: In Imaginal buffer, learn() means attending to the info (color='red', size=1)
-
-    import pyactup_v2 as pya
-    imaginal_buffer=pya.Memory() 
-    imaginal_buffer.learn(color='red', size=1)
-
-ENCODE: In declarative buffer, encode() means storing information to the LTM
-
-    dm_buffer.encode(imaginal_buffer._curr_chunk(0))
-    dm_buffer.advance(2)
-    imaginal_buffer.reset() 
-    
-
-RETRIEVE: first attending to the info, and then trying to retrieve. If succeed, re-encode, otherwise, do nothing 
-
-    imaginal_buffer.learn(color='red', size=1)
-    result = dm_buffer.retrieve(imaginal_buffer._curr_chunk(0))
-    
-    ### set mismatch param = 100 for partial matching
-    dm_buffer.mismatch=100
-    imaginal_buffer.learn(color='red', size=1)
-    ichunk=imaginal_buffer._curr_chunk(0)
-    
-    result = dm_buffer.retrieve(ichunk, partial=True)
-    dm_buffer.advance(2)
-
+      m=pya.Memory()
+      m.activation_history=[]
+      m.learn(color='red', size=1, importance=100)
+      m.advance()
+      m.learn(face='red', height=2, importance=None)
+      m.advance()
+      m.learn(face='yellow', height=1)
+      m.advance()
+      
+      m.retrieve(color='red', size=1)
 ### What's NEXT?
-- Add Emotinal term - DONE
-- Implement partial match - DONE
-- Time. dm_buffer and imaginal buffer each has a clock. Need to fix this issue. 
