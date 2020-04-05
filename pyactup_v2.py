@@ -468,9 +468,7 @@ class Memory(dict):
         if not chunk._references:
             del self[signature]
         return True
-
     
-    """MODIFIED: add spreading()"""
     def retrieve(self, partial=False, **kwargs):
         """Returns the chunk matching the *kwargs* that has the highest activation greater than this Memory's :attr:`threshold`.
         If there is no such matching chunk returns ``None``.
@@ -494,7 +492,7 @@ class Memory(dict):
         >>> m.retrieve(color="blue")["widget"]
         'snackleizer'
         """
-        self._spreading(kwargs)       
+        # self._spreading(kwargs)       
         if partial:
             return self._partial_match(kwargs)
         else:
@@ -525,13 +523,17 @@ class Memory(dict):
         p = random.uniform(sys.float_info.epsilon, 1 - sys.float_info.epsilon)
         return self._noise * math.log((1.0 - p) / p)
     
-    ### Added new functions for spreading activation
-    def _spreading(self, conditions):
-        """split conditions into sources, and spread to chunks in m (self)
+    ###New function for spreading activation
+    def spread(self, **kwargs):
+        """ This new method will reformat kwargs to sources, and 
+        spread activation to chunks in m (self), and 
         assign new spreading activation value to each chunk in m (self)
         """
+        if not kwargs:
+            raise ValueError(f"No attributes to spread")
+        
         # iterate through all chunks
-        spreading_activation_vector = self._compute_spreading_activation_vec(conditions)
+        spreading_activation_vector = self._compute_spreading_activation_vec(kwargs)
         if spreading_activation_vector is None or len(spreading_activation_vector)!=len(self.values()):
             raise RuntimeError("Failed to spread.")
         index_chunk = 0
@@ -583,6 +585,14 @@ class Memory(dict):
         result=np.sum(wj*sji*match_matrix.T, axis=1)
         return result
     """HELPER Functions Finished"""
+    
+    def reset_spread(self):
+        """undo spreading by assigning None to chunk.spreading_activation xs"""
+        index_chunk = 0
+        for chunk in self.values():
+            chunk.spreading_activation=None
+            index_chunk=index_chunk+1   
+    
 
     class _Activations(abc.Iterable):
 
@@ -816,7 +826,7 @@ class Chunk(dict):
     def spreading_activation(self, value):
         """By default, spreading_activation is 0
         Chunk's spreading_activation is assigned when spreading() is called"""
-        self._spreading_activation = float(value)
+        self._spreading_activation = value
         
     @property
     def importance(self):
