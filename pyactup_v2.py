@@ -524,14 +524,19 @@ class Memory(dict):
         return self._noise * math.log((1.0 - p) / p)
     
     ###New function for spreading activation
-    def spread(self, **kwargs):
-        """ This new method will reformat kwargs to sources, and 
-        spread activation to chunks in m (self), and 
-        assign new spreading activation value to each chunk in m (self)
+    def spread(self, auto_clear=False, **kwargs):
+        """ This new method will reformat kwargs to sources, spread activation 
+        to chunks in m (self). 
+        By default, the spreading activation value is None. Everytime spread() is called, 
+        new value will be added to the chunk cumulatively. It could be set to None by calling
+        clear_spread()
         """
         if not kwargs:
             raise ValueError(f"No attributes to spread")
-        
+        # automatically clear spreading activation value
+        if auto_clear:
+            self.clear_spread()
+            
         # iterate through all chunks
         spreading_activation_vector = self._compute_spreading_activation_vec(kwargs)
         if spreading_activation_vector is None or len(spreading_activation_vector)!=len(self.values()):
@@ -586,7 +591,7 @@ class Memory(dict):
         return result
     """HELPER Functions Finished"""
     
-    def reset_spread(self):
+    def clear_spread(self):
         """undo spreading by assigning None to chunk.spreading_activation xs"""
         index_chunk = 0
         for chunk in self.values():
@@ -825,9 +830,12 @@ class Chunk(dict):
     @spreading_activation.setter
     def spreading_activation(self, value):
         """By default, spreading_activation is 0
-        Chunk's spreading_activation is assigned when spreading() is called"""
-        self._spreading_activation = value
-        
+        Chunk's spreading_activation is added when spreading() is called"""
+        if value and self._spreading_activation:
+            self._spreading_activation+=value
+        else:
+            self._spreading_activation=value
+    
     @property
     def importance(self):
         return self._importance
