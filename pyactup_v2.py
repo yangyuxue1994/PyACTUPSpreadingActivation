@@ -611,6 +611,8 @@ class Memory(dict):
         """Calculate the spreading activation for chunks in m
         conditions ->(spreading to) m
         Return a vector of spreading activation"""
+
+        ## [AS] NOTE --- WORK HERE ##
         # get match_matrix
         match_matrix=self._matching_source2chunk(conditions)
         print("match_matrix: ", match_matrix)
