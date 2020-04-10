@@ -38,8 +38,7 @@ sites.
 """
 
 __version__ = '1.0.2'
-'''This version adds spreading activation term, adds importance term for emotional valence
-modifies learn() and retrieve()'''
+'''This version adds sprea() for spreading activation term, adds importance term for emotional valence'''
 
 import collections
 import collections.abc as abc
@@ -52,7 +51,7 @@ import numpy as np
 from collections import OrderedDict
 from warnings import warn
 
-__all__ = ("Memory", "set_similarity_function", "use_actr_similarity")
+__all__ = ("Memory", "set_similarity_function", "use_actr_similarity", "set_sji_function", "use_costomized_sji")
 
 DEFAULT_NOISE = 0.25
 DEFAULT_DECAY = 0.5
@@ -528,8 +527,12 @@ class Memory(dict):
         """ This new method will reformat kwargs to sources, spread activation 
         to chunks in m (self). 
         By default, the spreading activation value is None. Everytime spread() is called, 
-        new value will be added to the chunk cumulatively. It could be set to None by calling
-        clear_spread()
+        new value will be added to the chunk cumulatively. It could be set to None by calling clear_spread().
+        By defualt, PyACTUP uses fan function to calculate sji. The equation used is: 
+            spreading activation = sum(wj * sji)
+                wj = W/n;
+                sji = S-ln(fan);
+        Any defined sji functions (see :func:`set_sji_function`) are called as necessary
         """
         if not kwargs:
             raise ValueError(f"No attributes to spread")
@@ -547,12 +550,13 @@ class Memory(dict):
             index_chunk=index_chunk+1
     
     """HELPER Functions"""
-    def _condition2chunk(self, conditions):
-        """compare conditions(M) to chunks(N) in m by spliting chunk into n sources, and compare sources to chunk
+    def _matching_source2chunk(self, conditions):
+        """compare conditions(M) to chunks(N) in m.
+        Spliting chunk into n sources, and compare sources to chunk
+        Return an NxM matrix
         Each row represents a chunk
         Each col represents a source
         Each cell is T/F indicating whether source's value is matching
-        Return NxM matrix
         """
         result=[]
         ### iterate through all slot-value pair in conditions
@@ -562,32 +566,66 @@ class Memory(dict):
             for chunk in self.values():
                 temp.append(cvalue in chunk.values()) #check if value occurs in chunk's values, regardless of slot names
             result.append(temp)
-        return result
-    
-    def _compute_spreading_activation_vec(self, conditions):
-        """Calculate the spreading activation for chunks in m
-        conditions ->(spreading to) m
-        Return a vector of spreading activation"""
-        # match_matrix: iterate through all chunks in m, each row is a chunk, each column is a source
-        match_matrix=self._condition2chunk(conditions)
-        match_matrix=np.array(match_matrix)
-        #print("match_matrix",match_matrix)
         """[[True  True]
             [True  False]
             [False True]]
         """
+        return np.array(result)
+    
+    def _actr_sji(self, match_matrix):
+        """Use default fan() function to compute sji
+        sji = S - log(fan)
+        """
+        # use default function _fan()
+        fan=np.sum(match_matrix, axis=1)+1 # return a vector of fan number, size=num of 
+        
+        # compute sji = S - ln(fan)
+        ## mas: maximum associative strength
+        # sji=self.mas - np.log(fan)
+        sji = 1.6-np.log(fan)
+        return sji
+    
+    
+    """--------------- cutomized function ---------------- """
+    _use_costomized_sji = False
+    #_minimum_sji = 0
+    #_maximum_sji = 1
+    _sji_function = None
+
+    def _sji(self, match_matrix):
+        # use either costimozed sji function or default actr sji function
+        if self._use_costomized_sji:
+            try:
+                result = self._sji_function(match_matrix)
+                print('in _sji (new): ', result)
+                return result
+            except:
+                warn(f"sji func has not been correctly defined. Using default sji fn")
+                pass
+        result=self._actr_sji(match_matrix)
+        print('in _sji (defualt): ', result)
+        return result
+        """--------------- cutomized function ---------------- """
+        
+    def _compute_spreading_activation_vec(self, conditions):
+        """Calculate the spreading activation for chunks in m
+        conditions ->(spreading to) m
+        Return a vector of spreading activation"""
+        # get match_matrix
+        match_matrix=self._matching_source2chunk(conditions)
+        print("match_matrix: ", match_matrix)
+        
         # compute wj = W/n
         wj=self.imaginal_activation * np.ones(len(conditions.items()))/len(conditions.items())
-        #print ("wj", wj)
+        print("wj: ", wj)
         
-        # compute sji
-        ## mas: maximum associative strength
-        fan=np.sum(match_matrix, axis=1)+1 # return a vector of fan number, size=num of 
-        sji=self.mas - np.log(fan)   
-        #print("sji", sji)
+        # cumpute sji = S - ln(fan)
+        sji =self._sji(match_matrix)
+        print("sji: ", sji)
         
         # compute sji for each chunk
         result=np.sum(wj*sji*match_matrix.T, axis=1)
+        print("vec: ", result)
         return result
     """HELPER Functions Finished"""
     
@@ -596,8 +634,8 @@ class Memory(dict):
         index_chunk = 0
         for chunk in self.values():
             chunk.spreading_activation=None
-            index_chunk=index_chunk+1   
-    
+            index_chunk=index_chunk+1 
+            
 
     class _Activations(abc.Iterable):
 
@@ -731,6 +769,37 @@ def set_similarity_function(function, *slots):
     """
     for s in slots:
         Memory._similarity_functions[s] = function
+
+"""------------------ added sji costomized --------------- """
+@property
+def use_costomized_sji():
+    """Whether to use custumized sji functions, or traditional ACT-R ones.
+    PyACTUp normally uses a fan function to calculate spreading activation. That is,
+    the fan number for each source is: counting the occurance of slot-value in DM plus 1. 
+    """
+    return Memory.use_costomized_sji
+
+@use_costomized_sji.setter
+def use_costomized_sji(value):
+    Memory._use_costomized_sji = bool(value)
+
+def set_sji_function(function):
+    """Assigns a sji function to be used when calculate sji.
+    The function should take two arguments, and return a real number between 0 and 1,
+    inclusive.
+    The function should be commutative; that is, if called with the same arguments
+    in the reverse order, it should return the same value.
+    It should also be stateless, always returning the same values if passed
+    the same arguments.
+    No error is raised if either of these constraints is violated, but the results
+    will, in most cases, be meaningless if they are.
+    >>> def f(x, y):
+    ...     if y < x:
+    ...         return f(y, x)
+    ...     return 1 - (y - x) / y
+    >>> set_similarity_function(f, "length", "width")
+    """
+    Memory._sji_function = function
 
 
 class Chunk(dict):
