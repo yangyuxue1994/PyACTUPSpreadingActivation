@@ -38,7 +38,9 @@ sites.
 """
 
 __version__ = '1.0.2'
-'''This version adds sprea() for spreading activation term, adds importance term for emotional valence'''
+'''This version adds sprea() for spreading activation term, adds importance term for emotional valence.
+Moreover, it allows user to create its own customized spreading activation function by calling 
+set_sji_function()'''
 
 import collections
 import collections.abc as abc
@@ -363,7 +365,7 @@ class Memory(dict):
             return result
         else:
             return -1
-    """--added------------------------------------------------------------------"""
+
     @property
     def imaginal_activation(self):
         """The imaginal_activation W, default to be 1"""
@@ -391,8 +393,6 @@ class Memory(dict):
             raise ValueError(f"The maximum association strength, {value}, must not be negative")
         else:
             self._mas = float(value)
-        
-    """--------------------------------------------------------------------"""
 
     """Modified: add a parameter importance"""
     def learn(self, importance=0, **kwargs):
@@ -585,8 +585,6 @@ class Memory(dict):
         sji = self.mas-np.log(fan)
         return sji
     
-    
-    """--------------- cutomized function ---------------- """
     _use_actr_sji = True
     #_minimum_sji = 0
     #_maximum_sji = 1
@@ -604,7 +602,6 @@ class Memory(dict):
         result=self._actr_sji(match_matrix)
         # print('in _sji (defualt): ', result)
         return result
-        """--------------- cutomized function ---------------- """
         
     def _compute_spreading_activation_vec(self, conditions):
         """Calculate the spreading activation for chunks in m
