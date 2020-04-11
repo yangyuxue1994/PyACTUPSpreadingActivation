@@ -51,7 +51,7 @@ import numpy as np
 from collections import OrderedDict
 from warnings import warn
 
-__all__ = ("Memory", "set_similarity_function", "use_actr_similarity", "set_sji_function", "use_costomized_sji")
+__all__ = ("Memory", "set_similarity_function", "use_actr_similarity", "set_sji_function", "use_actr_sji")
 
 DEFAULT_NOISE = 0.25
 DEFAULT_DECAY = 0.5
@@ -391,6 +391,7 @@ class Memory(dict):
             raise ValueError(f"The maximum association strength, {value}, must not be negative")
         else:
             self._mas = float(value)
+        
     """--------------------------------------------------------------------"""
 
     """Modified: add a parameter importance"""
@@ -581,29 +582,27 @@ class Memory(dict):
         
         # compute sji = S - ln(fan)
         ## mas: maximum associative strength
-        # sji=self.mas - np.log(fan)
-        sji = 1.6-np.log(fan)
+        sji = self.mas-np.log(fan)
         return sji
     
     
     """--------------- cutomized function ---------------- """
-    _use_costomized_sji = False
+    _use_actr_sji = True
     #_minimum_sji = 0
     #_maximum_sji = 1
     _sji_function = None
 
     def _sji(self, match_matrix):
-        # use either costimozed sji function or default actr sji function
-        if self._use_costomized_sji:
+        """decide whether to use default sji or customized sji function"""
+        if not self._use_actr_sji:
             try:
                 result = self._sji_function(match_matrix)
-                print('in _sji (new): ', result)
                 return result
             except:
                 warn(f"sji func has not been correctly defined. Using default sji fn")
                 pass
         result=self._actr_sji(match_matrix)
-        print('in _sji (defualt): ', result)
+        # print('in _sji (defualt): ', result)
         return result
         """--------------- cutomized function ---------------- """
         
@@ -613,19 +612,16 @@ class Memory(dict):
         Return a vector of spreading activation"""
         # get match_matrix
         match_matrix=self._matching_source2chunk(conditions)
-        print("match_matrix: ", match_matrix)
         
         # compute wj = W/n
         wj=self.imaginal_activation * np.ones(len(conditions.items()))/len(conditions.items())
-        print("wj: ", wj)
         
         # cumpute sji = S - ln(fan)
         sji =self._sji(match_matrix)
-        print("sji: ", sji)
         
         # compute sji for each chunk
         result=np.sum(wj*sji*match_matrix.T, axis=1)
-        print("vec: ", result)
+        #print("res: ", result)
         return result
     """HELPER Functions Finished"""
     
@@ -726,8 +722,7 @@ class Memory(dict):
             return weighted_outcomes / weights
         except ZeroDivisionError:
             return None
-
-
+        
 @property
 def use_actr_similarity():
     """Whether to use "natural" similarity values, or traditional ACT-R ones.
@@ -770,34 +765,30 @@ def set_similarity_function(function, *slots):
     for s in slots:
         Memory._similarity_functions[s] = function
 
-"""------------------ added sji costomized --------------- """
-@property
-def use_costomized_sji():
-    """Whether to use custumized sji functions, or traditional ACT-R ones.
-    PyACTUp normally uses a fan function to calculate spreading activation. That is,
-    the fan number for each source is: counting the occurance of slot-value in DM plus 1. 
-    """
-    return Memory.use_costomized_sji
-
-@use_costomized_sji.setter
-def use_costomized_sji(value):
-    Memory._use_costomized_sji = bool(value)
+def use_actr_sji(value):
+    #print("setter of use_actr_sji called")
+    Memory._use_actr_sji = bool(value)
 
 def set_sji_function(function):
     """Assigns a sji function to be used when calculate sji.
-    The function should take two arguments, and return a real number between 0 and 1,
-    inclusive.
+    The function should take two arguments Memory obejct and macth_matrix,
+    match_matrxi is a matrix of T/F, which comapres source and chunk in DM
+    see _matching_source2chunk()
+    For example, if DM contains 3 chunks, source contains 2 slots, 
+    macth_matrix is like 
+            [[True  True]
+            [True  False]
+            [False True]]
+    and return a vector of sji, N length (N=number of memory items in DM)
     The function should be commutative; that is, if called with the same arguments
     in the reverse order, it should return the same value.
     It should also be stateless, always returning the same values if passed
     the same arguments.
-    No error is raised if either of these constraints is violated, but the results
-    will, in most cases, be meaningless if they are.
-    >>> def f(x, y):
-    ...     if y < x:
-    ...         return f(y, x)
-    ...     return 1 - (y - x) / y
-    >>> set_similarity_function(f, "length", "width")
+    >>> def f(m, match_matrix):
+    ...     fan=np.sum(match_matrix, axis=1)+1
+    ...     sji=Memory.mas - np.log(fan * 100)
+    ...     return sji
+    >>> set_sji_function(f)
     """
     Memory._sji_function = function
 
