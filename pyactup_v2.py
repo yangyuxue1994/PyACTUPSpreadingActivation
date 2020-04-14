@@ -37,8 +37,8 @@ may be strictly algorithmic, may interact with human subjects, or may be embedde
 sites.
 """
 
-__version__ = '1.0.2'
-'''This version adds sprea() for spreading activation term, adds importance term for emotional valence.
+__version__ = '1.2.0'
+'''This version adds spread() for spreading activation term, adds importance term for emotional valence.
 Moreover, it allows user to create its own customized spreading activation function by calling 
 set_sji_function()'''
 
