@@ -53,7 +53,8 @@ import numpy as np
 from collections import OrderedDict
 from warnings import warn
 
-__all__ = ("Memory", "set_similarity_function", "use_actr_similarity", "set_sji_function", "use_actr_sji")
+__all__ = ("Memory", "set_similarity_function", "use_actr_similarity", 
+           "set_sji_function", "use_actr_sji", "set_matching_source2chunk_function", "use_actr_matching_source2chunk")
 
 DEFAULT_NOISE = 0.25
 DEFAULT_DECAY = 0.5
@@ -64,7 +65,7 @@ MINIMUM_TEMPERATURE = 0.01
 TRANSCENDENTAL_CACHE_SIZE = 1000
 
 """for spreading activation param"""
-DEFAULT_IMAGINAL_ACTIVATION = 1.0 # W
+DEFAULT_W = 1.0 # W
 DEFAULT_MAS = 1.6 # maximum associative strength
 
 class Memory(dict):
@@ -95,7 +96,7 @@ class Memory(dict):
                  threshold=DEFAULT_THRESHOLD,
                  mismatch=None,
                  optimized_learning=False,
-                 imaginal_activation=DEFAULT_IMAGINAL_ACTIVATION, 
+                 W=DEFAULT_W, 
                  mas=DEFAULT_MAS):
         self._temperature_param = 1 # will be reset below, but is needed for noise assignment
         self.noise = noise
@@ -104,7 +105,7 @@ class Memory(dict):
         self.temperature = temperature
         self.threshold = threshold
         self.mismatch = mismatch
-        self.imaginal_activation = imaginal_activation  #for spreading activation param W
+        self.W = W  #for spreading activation param W
         self.mas = mas  #for spreading activation param S
         self._activation_history = None
         self.reset(bool(optimized_learning))
@@ -367,18 +368,18 @@ class Memory(dict):
             return -1
 
     @property
-    def imaginal_activation(self):
-        """The imaginal_activation W, default to be 1"""
-        return self._imaginal_activation
+    def W(self):
+        """The W, default to be 1"""
+        return self._W
 
-    @imaginal_activation.setter
-    def imaginal_activation(self, value):
+    @W.setter
+    def W(self, value):
         if value is None or value is False:
-            self._imaginal_activation = None
+            self._W = None
         elif value < 0:
-            raise ValueError(f"The imaginal_activation, {value}, must not be negative")
+            raise ValueError(f"The W, {value}, must not be negative")
         else:
-            self._imaginal_activation = float(value)
+            self._W = float(value)
             
     @property
     def mas(self):
@@ -551,7 +552,7 @@ class Memory(dict):
             index_chunk=index_chunk+1
     
     """HELPER Functions"""
-    def _matching_source2chunk(self, conditions):
+    def _actr_matching_source2chunk(self, conditions):
         """compare conditions(M) to chunks(N) in m.
         Spliting chunk into n sources, and compare sources to chunk
         Return an NxM matrix
@@ -585,6 +586,21 @@ class Memory(dict):
         sji = self.mas-np.log(fan)
         return sji
     
+    _use_actr_matching_source2chunk = True
+    _matching_source2chunk_function = None
+
+    def _matching_source2chunk(self, conditions):
+        """decide whether to use default _matching_source2chunk functon or customized function"""
+        if not self._use_actr_matching_source2chunk:
+            try:
+                result = self._matching_source2chunk_function(conditions)
+                return result
+            except:
+                warn(f"new _matching_source2chunk func has not been correctly defined. Using default")
+                pass
+        result=self._actr_matching_source2chunk(conditions)
+        return result
+    
     _use_actr_sji = True
     #_minimum_sji = 0
     #_maximum_sji = 1
@@ -611,7 +627,7 @@ class Memory(dict):
         match_matrix=self._matching_source2chunk(conditions)
         
         # compute wj = W/n
-        wj=self.imaginal_activation * np.ones(len(conditions.items()))/len(conditions.items())
+        wj=self.W * np.ones(len(conditions.items()))/len(conditions.items())
         
         # cumpute sji = S - ln(fan)
         sji =self._sji(match_matrix)
@@ -762,8 +778,12 @@ def set_similarity_function(function, *slots):
     for s in slots:
         Memory._similarity_functions[s] = function
 
+@property
+def use_actr_sji():
+    return Memory.use_actr_sji
+    
+@use_actr_sji.setter
 def use_actr_sji(value):
-    #print("setter of use_actr_sji called")
     Memory._use_actr_sji = bool(value)
 
 def set_sji_function(function):
@@ -788,6 +808,18 @@ def set_sji_function(function):
     >>> set_sji_function(f)
     """
     Memory._sji_function = function
+
+
+@property
+def use_actr_matching_source2chunk():
+    return Memory.use_actr_matching_source2chunk
+
+@use_actr_matching_source2chunk.setter
+def use_actr_matching_source2chunk(value):
+    Memory._use_actr_matching_source2chunk = bool(value)
+
+def set_matching_source2chunk_function(function):
+    Memory._matching_source2chunk_function = function
 
 
 class Chunk(dict):
