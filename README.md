@@ -15,13 +15,14 @@ The function to calculate sji function could be customized. Both spreading activ
 
 The chunks in the buffers provide a context in which to perform a retrieval. Those chunks can spread activation to the chunks in declarative memory based on the contents of their slots. Those slot contents spread an amount of activation based on their relation to the other chunks, which we call their strength of association. This essentially results in increasing the activation of those chunks which are related to the current context. (See ACTR Tutorial Unit 5 for full explanations)
 
-By default, only imaginal buffer serves as source of activation. The W_imaginal (Imaginal Activation Parameter) is default to 1. In this version, I only implemented the default case and the equation for the activation Ai of a chunk i including spreading activation could be simplified as:
+By default, only imaginal buffer serves as source of activation. The W (Imaginal Activation Parameter) is default to 1. You could change use the customized sji function. (See test5)
 
+Below is the function used for default sji calculation:
 
 ![alt text](https://lh3.googleusercontent.com/ABVsgSQ0KneRZUL9PDXuYPKroQsutzg_5qMQ_NZEQfBX-wdly-aMd3v99ZBqjSu7LTL9ShwJMSscKsPLmjssHG9oLZO7z0-ToO70sXyL5Bs0bj-Xv67rY_ZsjxFPBzNClG6q-AG7 "Eq.1")
 
 
-- W: imaginal activation parameter (default 1)
+- W: (default 1)
 - Wj: W/n (n is the number of slots in current imaginal buffer chunk)
 
 The strength of association, Sji, between two chunks j and chunk i is 0 if chunk j is not the value of a slot of chunk i and j and i are not the same chunk. Otherwise, it is set using this equation:
@@ -54,15 +55,14 @@ Finally,
 
 ![alt_text](https://lh5.googleusercontent.com/1eAtAkKebiYqVc70u9Z8lpildhFlSkw-CH8KJ4AG00H-OUKeASHCl9AXgtvJZ5WG4mzLNE0BAayDW2GYzstM7meFRhXc8AY8Bt-8TwU)
 
-### Code Example
-      m=pya.Memory()
-      m.activation_history=[]
-      m.learn(color='red', size=1, importance=100)
-      m.advance()
-      m.learn(face='red', height=2, importance=None)
-      m.advance()
-      m.learn(face='yellow', height=1)
+### Spread() Example
+      m.learn(color='red', size=1)
       m.advance()
       
+      m.spread(color='red')
       m.retrieve(color='red', size=1)
+
+### Spread() Example
+      m.learn(color='red', size=1, importance=100)
+      m.advance()
 ### What's NEXT?
