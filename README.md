@@ -45,16 +45,14 @@ The effects of emotion on declarative memory is represented by the scalar value 
 
 The new term I(m) can be broadly interpreted as the degree of importance (needed for survival) of this memory, or specifically can be interpreted as emotional processing. Memories that are associated with different emotions, or to the same emotion but to a different degree, should also differ in importance value. Admittedly, there could be many factors that determine how important one memory is, but here we make a simple approximation, the term I(m) can be interpreted as a single measure capturing the emotional intensity of memory.
 
-![alt text](https://lh3.googleusercontent.com/PgI6peikKtHoKhjGSehkbs5xND0XdGzqFV4BHdPvLt_awR-WgwYjvcAghR1zh-BhKYwfqzyzKaFCPfwdYx-IuUkd9jyznaGzHqwak1ll "Importance Term")
+![alt text](https://lh3.googleusercontent.com/Bq7Ul8PxrDp4IRENfJIxCoUWRHlt0oetDGJFfaK2Dmd6_8TH3y2X-Vr6UnaBcVY5MU4Ku3GtmwWeXRm5qC5ZP6rOrAVdUFM-jM4XX2Zp "Importance Term")
 
 The equation of Importance term is expressed as one chunk's posterior probability multiplied by its importance 
                         I(m) / I(¬m)
 
-![alt_text](https://lh3.googleusercontent.com/JOhd2plJV7SKOAgNHGhTTKrRnJq1v9iCB4CRWfF-yEZ5kyqo23E6aLLBCDJmKOZgFNRZ-GR7SiFHPv_MvuOn7QMqeyCccuELKqxtPFit)
-
 Finally, 
 
-![alt_text](https://lh5.googleusercontent.com/Eia8Vt1LQEY4jeGSeUYd6ppac8zx2YsUhwcbwgGzpI4xUpzRO8r9wtXj4U8DsVCJ2EBh2IiZ0ODRVcrEQXxea_-M7Wto5E_9hKCY9YU)
+![alt_text](https://lh5.googleusercontent.com/1eAtAkKebiYqVc70u9Z8lpildhFlSkw-CH8KJ4AG00H-OUKeASHCl9AXgtvJZ5WG4mzLNE0BAayDW2GYzstM7meFRhXc8AY8Bt-8TwU)
 
 ### Code Example
       m=pya.Memory()
