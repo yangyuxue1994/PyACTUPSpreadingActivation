@@ -7,7 +7,7 @@ In addition, it requires numpy packages 1.18.1+
 ### What's new
 This version adds spreading activation term, importance term.  
 
-The imaginal buffer could set **importance** parameter. By default, it would add a uniformly distributed value from 0-2 to Activation. When importance is set to a high value, it would be added to chunk's Activation and take over the retrieval process. (Details about the definition and theory behind **impotance** could be found here: https://github.com/UWCCDL/PTSD) 
+You could set **importance** parameter. By default, it would add a uniformly distributed value from 0-2 to Activation. When importance is set to a high value, it would be added to chunk's Activation and take over the retrieval process. (Details about the definition and theory behind **impotance** could be found here: https://github.com/UWCCDL/PTSD) 
 
 The function to calculate sji function could be customized. Both spreading activation and importance term could be checked in _activation_history.
 
