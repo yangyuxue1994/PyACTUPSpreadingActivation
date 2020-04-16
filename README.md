@@ -62,7 +62,7 @@ Finally,
       m.spread(color='red')
       m.retrieve(color='red', size=1)
 
-### Spread() Example
+### imporrtance Example
       m.learn(color='red', size=1, importance=100)
       m.advance()
 ### What's NEXT?
