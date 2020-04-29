@@ -54,7 +54,7 @@ from collections import OrderedDict
 from warnings import warn
 
 __all__ = ("Memory", "set_similarity_function", "use_actr_similarity", 
-           "set_sji_function", "use_actr_sji", "set_matching_source2chunk_function", "use_actr_matching_source2chunk")
+           "set_sji_function", "use_actr_sji", "set_matching_source_to_chunk_function", "use_actr_matching_source_to_chunk")
 
 DEFAULT_NOISE = 0.25
 DEFAULT_DECAY = 0.5
@@ -65,8 +65,8 @@ MINIMUM_TEMPERATURE = 0.01
 TRANSCENDENTAL_CACHE_SIZE = 1000
 
 """for spreading activation param"""
-DEFAULT_W = 1.0 # W
-DEFAULT_MAS = 1.6 # maximum associative strength
+DEFAULT_SOURCE_ACTIVATION = 1.0 # W
+DEFAULT_MAX_ASSOCIATIVE_STRENGTH = 1.6 # associative strength
 
 class Memory(dict):
     """A cognitive entity containing a collection of learned things, its chunks.
@@ -96,8 +96,8 @@ class Memory(dict):
                  threshold=DEFAULT_THRESHOLD,
                  mismatch=None,
                  optimized_learning=False,
-                 W=DEFAULT_W, 
-                 mas=DEFAULT_MAS):
+                 source_activation=DEFAULT_SOURCE_ACTIVATION,  # w
+                 max_associative_strength=DEFAULT_MAX_ASSOCIATIVE_STRENGTH):
         self._temperature_param = 1 # will be reset below, but is needed for noise assignment
         self.noise = noise
         self._decay = None
@@ -105,8 +105,8 @@ class Memory(dict):
         self.temperature = temperature
         self.threshold = threshold
         self.mismatch = mismatch
-        self.W = W  #for spreading activation param W
-        self.mas = mas  #for spreading activation param S
+        self.source_activation = source_activation  # source of spreading activation param W
+        self.max_associative_strength = max_associative_strength  #for spreading activation param S
         self._activation_history = None
         self.reset(bool(optimized_learning))
 
@@ -368,32 +368,32 @@ class Memory(dict):
             return -1
 
     @property
-    def W(self):
+    def source_activation(self):
         """The W, default to be 1"""
         return self._W
 
-    @W.setter
-    def W(self, value):
+    @source_activation.setter
+    def source_activation(self, value):
         if value is None or value is False:
-            self._W = None
+            self._source_activation = None
         elif value < 0:
             raise ValueError(f"The W, {value}, must not be negative")
         else:
-            self._W = float(value)
+            self._source_activation = float(value)
             
     @property
-    def mas(self):
+    def max_associative_strength(self):
         """The maximum association strength S, default to be 1.6"""
-        return self._mas
+        return self._max_associative_strength
 
-    @mas.setter
-    def mas(self, value):
+    @max_associative_strength.setter
+    def max_associative_strength(self, value):
         if value is None or value is False:
-            self._mas = None
+            self._max_associative_strength = None
         elif value < 0:
             raise ValueError(f"The maximum association strength, {value}, must not be negative")
         else:
-            self._mas = float(value)
+            self._max_associative_strength = float(value)
 
     """Modified: add a parameter importance"""
     def learn(self, importance=0, **kwargs):
@@ -433,12 +433,11 @@ class Memory(dict):
             chunk = Chunk(self, kwargs)
             self[signature] = chunk
             created = True
+            chunk.importance = importance  # set importance
         if self._optimized_learning:
             chunk._references += 1
         else:
             chunk._references.append(self._time)
-        # set importance
-        chunk.importance=importance 
         return created
 
     def forget(self, when, **kwargs):
@@ -524,12 +523,12 @@ class Memory(dict):
         p = random.uniform(sys.float_info.epsilon, 1 - sys.float_info.epsilon)
         return self._noise * math.log((1.0 - p) / p)
     
-    ###New function for spreading activation
+    # New function for spreading activation
     def spread(self, auto_clear=False, **kwargs):
-        """ This new method will reformat kwargs to sources, spread activation 
-        to chunks in m (self). 
-        By default, the spreading activation value is None. Everytime spread() is called, 
-        new value will be added to the chunk cumulatively. It could be set to None by calling clear_spread().
+        """ This new method will reformat kwargs to sources, add spreading activation 
+        to chunks. By default, the spreading activation value is None. 
+        Everytime spread() is called, new value will be added to the chunk cumulatively. 
+        If call clear_spread(), spreading activation will be set to None.
         By defualt, PyACTUP uses fan function to calculate sji. The equation used is: 
             spreading activation = sum(wj * sji)
                 wj = W/n;
@@ -552,7 +551,7 @@ class Memory(dict):
             index_chunk=index_chunk+1
     
     """HELPER Functions"""
-    def _actr_matching_source2chunk(self, conditions):
+    def _actr_matching_source_to_chunk(self, conditions):
         """compare conditions(M) to chunks(N) in m.
         Spliting chunk into n sources, and compare sources to chunk
         Return an NxM matrix
@@ -561,10 +560,10 @@ class Memory(dict):
         Each cell is T/F indicating whether source's value is matching
         """
         result=[]
-        ### iterate through all slot-value pair in conditions
+        # iterate through all slot-value pair in conditions
         for cslot, cvalue in conditions.items():
-            ### iterate through all slot-value pair in m
             temp=[]
+            # iterate through all slot-value pair in m
             for chunk in self.values():
                 temp.append(cvalue in chunk.values()) #check if value occurs in chunk's values, regardless of slot names
             result.append(temp)
@@ -582,18 +581,18 @@ class Memory(dict):
         fan=np.sum(match_matrix, axis=1)+1 # return a vector of fan number, size=num of 
         
         # compute sji = S - ln(fan)
-        ## mas: maximum associative strength
-        sji = self.mas-np.log(fan)
+        ## max_associative_strength: maximum associative strength
+        sji = self.max_associative_strength-np.log(fan)
         return sji
     
-    _use_actr_matching_source2chunk = True
-    _matching_source2chunk_function = None
+    _use_actr_matching_source_to_chunk = True
+    _matching_source_to_chunk_function = None
 
-    def _matching_source2chunk(self, conditions):
+    def _matching_source_to_chunk(self, conditions):
         """decide whether to use default _matching_source2chunk functon or customized function"""
-        if not self._use_actr_matching_source2chunk:
+        if not self._use_actr_matching_source_to_chunk:
             try:
-                result = self._matching_source2chunk_function(conditions)
+                result = self._matching_source_to_chunk_function(conditions)
                 return result
             except:
                 warn(f"new _matching_source2chunk func has not been correctly defined. Using default")
@@ -616,7 +615,6 @@ class Memory(dict):
                 warn(f"sji func has not been correctly defined. Using default sji fn")
                 pass
         result=self._actr_sji(match_matrix)
-        # print('in _sji (defualt): ', result)
         return result
         
     def _compute_spreading_activation_vec(self, conditions):
@@ -627,19 +625,18 @@ class Memory(dict):
         match_matrix=self._matching_source2chunk(conditions)
         
         # compute wj = W/n
-        wj=self.W * np.ones(len(conditions.items()))/len(conditions.items())
+        wj=self.source_activation * np.ones(len(conditions.items()))/len(conditions.items())
         
         # cumpute sji = S - ln(fan)
         sji =self._sji(match_matrix)
         
         # compute sji for each chunk
         result=np.sum(wj*sji*match_matrix.T, axis=1)
-        #print("res: ", result)
         return result
     """HELPER Functions Finished"""
     
     def clear_spread(self):
-        """undo spreading by assigning None to chunk.spreading_activation xs"""
+        """undo spreading by assigning None to chunk.spreading_activation"""
         index_chunk = 0
         for chunk in self.values():
             chunk.spreading_activation=None
@@ -686,8 +683,10 @@ class Memory(dict):
         best_activation = self._threshold
         for chunk, activation in self._activations(conditions):
             if activation >= self._threshold:
+            #if activation >= best_activation:
                 best_chunk = chunk
                 best_activation = activation
+            #print('best_activation', best_activation)
         return best_chunk
 
     def blend(self, outcome_attribute, **kwargs):
@@ -778,11 +777,10 @@ def set_similarity_function(function, *slots):
     for s in slots:
         Memory._similarity_functions[s] = function
 
-@property
+
 def use_actr_sji():
     return Memory.use_actr_sji
-    
-@use_actr_sji.setter
+
 def use_actr_sji(value):
     Memory._use_actr_sji = bool(value)
 
@@ -803,23 +801,22 @@ def set_sji_function(function):
     the same arguments.
     >>> def f(m, match_matrix):
     ...     fan=np.sum(match_matrix, axis=1)+1
-    ...     sji=Memory.mas - np.log(fan * 100)
+    ...     sji=Memory.max_associative_strength - np.log(fan * 100)
     ...     return sji
     >>> set_sji_function(f)
     """
     Memory._sji_function = function
 
 
-@property
-def use_actr_matching_source2chunk():
-    return Memory.use_actr_matching_source2chunk
 
-@use_actr_matching_source2chunk.setter
-def use_actr_matching_source2chunk(value):
-    Memory._use_actr_matching_source2chunk = bool(value)
+def use_actr_matching_source_to_chunk():
+    return Memory.use_actr_matching_source_to_chunk
 
-def set_matching_source2chunk_function(function):
-    Memory._matching_source2chunk_function = function
+def use_actr_matching_source_to_chunk(value):
+    Memory._use_actr_matching_source_to_chunk = bool(value)
+
+def set_matching_source_to_chunk_function(function):
+    Memory._matching_source_to_chunk_function = function
 
 
 class Chunk(dict):
@@ -931,10 +928,13 @@ class Chunk(dict):
 
     @importance.setter
     def importance(self, value):
-        """By default, importance is uniformally distributed 0-2. Otherwise, it could be set to any value"""
+        """By default, importance is turned off (set 0). If set None/False, it is uniformally distributed 0-2. 
+        importance cannot be negative number"""
         if value is None or value is False:
             p = random.uniform(sys.float_info.epsilon, 2 - sys.float_info.epsilon)
             self._importance = math.log(p)
+        elif value < 0:
+            raise ValueError(f"The importance, {value}, must not be negative")
         else:
             self._importance = float(value)
 
